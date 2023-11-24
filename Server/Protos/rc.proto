@@ -1,0 +1,26 @@
+﻿syntax = "proto3";
+
+option csharp_namespace = "Server";
+
+package greet;
+
+service Auth {
+  rpc Login(LoginRequest) returns (TokensResponse);
+  rpc Register(RegisterRequest) returns (TokensResponse);
+}
+
+message LoginRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message RegisterRequest {
+  string email = 1;
+  string name = 2;
+  string password = 3;
+}
+
+message TokensResponse {
+  string access = 1;
+  string refresh = 2;
+}
