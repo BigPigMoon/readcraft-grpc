@@ -1,16 +1,34 @@
-﻿using Grpc.Core;
+﻿using Server.Services.Auth;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
-namespace Server.Services;
-
-public class AuthService : Auth.AuthBase
+namespace Server.Services
 {
-    public override Task<TokensResponse> Login(LoginRequest request, ServerCallContext context)
+    internal class AuthService : IAuthService
     {
-        throw new NotImplementedException();
-    }
+        public AuthService() { }
 
-    public override Task<TokensResponse> Register(RegisterRequest request, ServerCallContext context)
-    {
-        throw new NotImplementedException();
+        public Task<TokensResponse> Login(string email, string password)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task Logout(int userId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<TokensResponse> Refresh(string refreshToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public async Task<TokensResponse> Register(string email, string username, string password)
+        {
+            return new TokensResponse() { Access = "", Refresh = "" };
+        }
     }
 }

@@ -2,7 +2,7 @@
 
 option csharp_namespace = "Server";
 
-package greet;
+package rc;
 
 service Auth {
   rpc Login(LoginRequest) returns (TokensResponse);
@@ -16,7 +16,7 @@ message LoginRequest {
 
 message RegisterRequest {
   string email = 1;
-  string name = 2;
+  string username = 2;
   string password = 3;
 }
 
