@@ -4,8 +4,7 @@ using Server.Services.Auth;
 
 namespace Server.Handlers;
 
-
-public class AuthHandler : Auth.AuthBase
+public class AuthHandler : AuthHand.AuthHandBase
 {
     private readonly IAuthService _authService;
 
@@ -16,6 +15,7 @@ public class AuthHandler : Auth.AuthBase
 
     public override Task<TokensResponse> Login(LoginRequest request, ServerCallContext context)
     {
+
         throw new NotImplementedException();
     }
 
@@ -27,7 +27,7 @@ public class AuthHandler : Auth.AuthBase
 
         if (email == "")
             throw new RpcException(new Status(StatusCode.InvalidArgument, "Email is required"));
-        
+
         if (password == "")
             throw new RpcException(new Status(StatusCode.InvalidArgument, "Password is required"));
 
