@@ -13,10 +13,18 @@ public class AuthHandler : AuthHand.AuthHandBase
         _authService = new AuthService();
     }
 
-    public override Task<TokensResponse> Login(LoginRequest request, ServerCallContext context)
+    public override async Task<TokensResponse> Login(LoginRequest request, ServerCallContext context)
     {
+        string email = request.Email.Trim();
+        string password = request.Password.Trim();
 
-        throw new NotImplementedException();
+        if (email == "")
+            throw new RpcException(new Status(StatusCode.InvalidArgument, "Email is required"));
+
+        if (password == "")
+            throw new RpcException(new Status(StatusCode.InvalidArgument, "Password is required"));
+
+        return await _authService.Login(email, password);
     }
 
     public override async Task<TokensResponse> Register(RegisterRequest request, ServerCallContext context)

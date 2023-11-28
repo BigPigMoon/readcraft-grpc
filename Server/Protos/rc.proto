@@ -4,6 +4,8 @@ option csharp_namespace = "Server";
 
 package rc;
 
+import "google/protobuf/wrappers.proto";
+
 message EmptyRequest {}
 
 service AuthHand {
