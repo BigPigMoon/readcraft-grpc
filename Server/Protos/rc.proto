@@ -4,7 +4,9 @@ option csharp_namespace = "Server";
 
 package rc;
 
-service Auth {
+message EmptyRequest {}
+
+service AuthHand {
   rpc Login(LoginRequest) returns (TokensResponse);
   rpc Register(RegisterRequest) returns (TokensResponse);
 }
@@ -23,4 +25,17 @@ message RegisterRequest {
 message TokensResponse {
   string access = 1;
   string refresh = 2;
+}
+
+service UserHand {
+	rpc Users(EmptyRequest) returns (UsersResponse);
+}
+
+message UserResponse {
+	int64 id = 1;
+	string username = 2;
+}
+
+message UsersResponse {
+	repeated UserResponse users = 1;
 }
