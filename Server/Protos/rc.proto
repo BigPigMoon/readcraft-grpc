@@ -11,6 +11,8 @@ message EmptyRequest {}
 service AuthHand {
   rpc Login(LoginRequest) returns (TokensResponse);
   rpc Register(RegisterRequest) returns (TokensResponse);
+  rpc Refresh(EmptyRequest) returns (TokensResponse);
+  rpc Logout(EmptyRequest) returns (EmptyRequest);
 }
 
 message LoginRequest {

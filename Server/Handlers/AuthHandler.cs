@@ -44,4 +44,14 @@ public class AuthHandler : AuthHand.AuthHandBase
 
         return await _authService.Register(email, username, password);
     }
+
+    public override Task<TokensResponse> Refresh(EmptyRequest request, ServerCallContext context)
+    {
+        throw new NotImplementedException();
+    }
+
+    public override Task<EmptyRequest> Logout(EmptyRequest request, ServerCallContext context)
+    {
+        throw new NotImplementedException();
+    }
 }
