@@ -6,7 +6,7 @@ namespace Server.Handlers
 {
     internal class UserHandler : UserHand.UserHandBase
     {
-        [Authorize]
+        [Authorize("Access")]
         public override Task<UsersResponse> Users(EmptyRequest request, ServerCallContext context)
         {
             Context ctx = Context.GetInstance();

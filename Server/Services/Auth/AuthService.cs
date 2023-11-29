@@ -55,9 +55,7 @@ namespace Server.Services.Auth
             var user = await ctx.db.Users.Where(u => u.Email == email && u.Username == username).FirstOrDefaultAsync();
 
             if (user != null)
-            {
                 throw new RpcException(new Status(StatusCode.AlreadyExists, "User already exists"));
-            }
 
             User newUser = new() { Email = email, Username = username, PasswordHash = HashString(password) };
 

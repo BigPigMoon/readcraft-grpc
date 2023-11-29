@@ -25,6 +25,15 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     }
 );
 
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("Access", policy =>
+    {
+        policy.RequireAuthenticatedUser();
+        policy.RequireClaim("scope", "access");
+    });
+});
+
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
