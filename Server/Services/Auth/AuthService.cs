@@ -21,13 +21,13 @@ namespace Server.Services.Auth
             if (user == null)
                 throw new RpcException(new Status(StatusCode.NotFound, "User not found"));
 
-            if (!HashUtil.VerifyString(password, user.PasswordHash))
+            if (!HashUtil.VerifyPassword(password, user.PasswordHash))
                 throw new RpcException(new Status(StatusCode.Unauthenticated, "Invalid login or password"));
 
             string accessToken = JwtUtils.GetToken(user, AuthOptions.accessLifetime, JwtTypes.Access);
             string refreshToken = JwtUtils.GetToken(user, AuthOptions.refreshLifetime, JwtTypes.Refresh);
 
-            user.TokenHash = HashUtil.HashString(refreshToken);
+            user.TokenHash = HashUtil.HashToken(refreshToken);
             await ctx.db.SaveChangesAsync();
 
             return new TokensResponse
@@ -83,13 +83,13 @@ namespace Server.Services.Auth
             if (user.TokenHash == null)
                 throw new RpcException(new Status(StatusCode.NotFound, "User does not authorize"));
 
-            if (!HashUtil.VerifyString(refreshToken, user.TokenHash))
+            if (!HashUtil.VerifyToken(refreshToken, user.TokenHash))
                 throw new RpcException(new Status(StatusCode.InvalidArgument, "Token is not valid"));
 
             string newAccessToken = JwtUtils.GetToken(user, AuthOptions.accessLifetime, JwtTypes.Access);
             string newRefreshToken = JwtUtils.GetToken(user, AuthOptions.refreshLifetime, JwtTypes.Refresh);
 
-            user.TokenHash = HashUtil.HashString(refreshToken);
+            user.TokenHash = HashUtil.HashToken(newRefreshToken);
             await ctx.db.SaveChangesAsync();
 
             return new TokensResponse
@@ -108,7 +108,7 @@ namespace Server.Services.Auth
             if (user != null)
                 throw new RpcException(new Status(StatusCode.AlreadyExists, "User already exists"));
 
-            User newUser = new() { Email = email, Username = username, PasswordHash = HashUtil.HashString(password) };
+            User newUser = new() { Email = email, Username = username, PasswordHash = HashUtil.HashPassowd(password) };
 
             await ctx.db.AddAsync(newUser);
             await ctx.db.SaveChangesAsync();
@@ -116,7 +116,7 @@ namespace Server.Services.Auth
             string accessToken = JwtUtils.GetToken(newUser, AuthOptions.accessLifetime, JwtTypes.Access);
             string refreshToken = JwtUtils.GetToken(newUser, AuthOptions.refreshLifetime, JwtTypes.Refresh);
 
-            newUser.TokenHash = HashUtil.HashString(refreshToken);
+            newUser.TokenHash = HashUtil.HashToken(refreshToken);
             await ctx.db.SaveChangesAsync();
 
             return new TokensResponse
