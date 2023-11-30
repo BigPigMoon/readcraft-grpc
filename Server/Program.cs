@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Server;
 using Server.Handlers;
 using Server.Services.Auth;
 
@@ -27,10 +28,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy("Access", policy =>
+    options.AddPolicy(AuthPolicy.AccessPolicy, policy =>
     {
         policy.RequireAuthenticatedUser();
-        policy.RequireClaim("scope", "access");
+        policy.RequireClaim(JwtClaimTypes.Scope, JwtTypes.Access);
     });
 });
 

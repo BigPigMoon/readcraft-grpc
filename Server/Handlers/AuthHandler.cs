@@ -1,6 +1,8 @@
 ﻿using Grpc.Core;
-using Server.Services;
+using Microsoft.AspNetCore.Authorization;
 using Server.Services.Auth;
+using Server.Utils;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace Server.Handlers;
 
@@ -45,13 +47,29 @@ public class AuthHandler : AuthHand.AuthHandBase
         return await _authService.Register(email, username, password);
     }
 
-    public override Task<TokensResponse> Refresh(EmptyRequest request, ServerCallContext context)
+    public override async Task<TokensResponse> Refresh(EmptyRequest request, ServerCallContext context)
     {
-        throw new NotImplementedException();
+        var refreshtToken = context.RequestHeaders.GetValue("authorization");
+
+        if (refreshtToken == null)
+            throw new RpcException(new Status(StatusCode.Unauthenticated, "Refresh token not found in header"));
+
+        return await _authService.Refresh(refreshtToken.Split(' ')[1]);
     }
 
-    public override Task<EmptyRequest> Logout(EmptyRequest request, ServerCallContext context)
+    [Authorize(AuthPolicy.AccessPolicy)]
+    public override async Task<EmptyRequest> Logout(EmptyRequest request, ServerCallContext context)
     {
-        throw new NotImplementedException();
+        var accessToken = context.RequestHeaders.GetValue("authorization");
+
+        if (accessToken == null)
+            throw new RpcException(new Status(StatusCode.Unauthenticated, "Token not found in header"));
+
+        JwtSecurityToken jwt = JwtUtils.DecodeJwt(accessToken);
+        int userId = JwtUtils.GetUid(jwt);
+
+        await _authService.Logout(userId);
+
+        return new EmptyRequest();
     }
 }

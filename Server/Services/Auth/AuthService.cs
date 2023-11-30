@@ -5,13 +5,12 @@ using Microsoft.EntityFrameworkCore;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
+using Server.Utils;
 
 namespace Server.Services.Auth
 {
     internal class AuthService : IAuthService
     {
-        public AuthService() { }
-
         public async Task<TokensResponse> Login(string email, string password)
         {
 
@@ -22,13 +21,13 @@ namespace Server.Services.Auth
             if (user == null)
                 throw new RpcException(new Status(StatusCode.NotFound, "User not found"));
 
-            if (!VerifyString(password, user.PasswordHash))
+            if (!HashUtil.VerifyString(password, user.PasswordHash))
                 throw new RpcException(new Status(StatusCode.Unauthenticated, "Invalid login or password"));
 
-            string accessToken = GetToken(user, AuthOptions.accessLifetime, "access");
-            string refreshToken = GetToken(user, AuthOptions.refreshLifetime, "refresh");
+            string accessToken = JwtUtils.GetToken(user, AuthOptions.accessLifetime, JwtTypes.Access);
+            string refreshToken = JwtUtils.GetToken(user, AuthOptions.refreshLifetime, JwtTypes.Refresh);
 
-            user.TokenHash = HashString(refreshToken);
+            user.TokenHash = HashUtil.HashString(refreshToken);
             await ctx.db.SaveChangesAsync();
 
             return new TokensResponse
@@ -38,14 +37,66 @@ namespace Server.Services.Auth
             };
         }
 
-        public Task Logout(int userId)
+        public async Task Logout(int userId)
         {
-            throw new NotImplementedException();
+            var ctx = Context.GetInstance();
+
+            var user = await ctx.db.Users.Where(u => u.Id == userId).FirstOrDefaultAsync();
+
+            if (user == null)
+                throw new RpcException(new Status(StatusCode.NotFound, "User not found"));
+
+            user.TokenHash = null;
+
+            await ctx.db.SaveChangesAsync();
         }
 
-        public Task<TokensResponse> Refresh(string refreshToken)
+        public async Task<TokensResponse> Refresh(string refreshToken)
         {
-            throw new NotImplementedException();
+            JwtSecurityTokenHandler jwtHandler = new();
+
+            JwtSecurityToken jwtToken = jwtHandler.ReadJwtToken(refreshToken);
+
+            if (jwtToken == null)
+                throw new RpcException(new Status(StatusCode.Internal, "Can not read token"));
+
+            var scope = jwtToken.Claims.FirstOrDefault(claims => claims.Type == JwtClaimTypes.Scope)?.Value;
+
+            if (scope == null)
+                throw new RpcException(new Status(StatusCode.NotFound, "Scope not found"));
+
+            if (scope != JwtTypes.Refresh)
+                throw new RpcException(new Status(StatusCode.InvalidArgument, "Use the refresh token"));
+
+            var userId = jwtToken.Claims.FirstOrDefault(claim => claim.Type == JwtClaimTypes.UserId)?.Value;
+
+            if (userId == null)
+                throw new RpcException(new Status(StatusCode.NotFound, "Uid not found"));
+
+            var ctx = Context.GetInstance();
+
+            var user = await ctx.db.Users.Where(u => u.Id == int.Parse(userId)).FirstOrDefaultAsync();
+
+            if (user == null)
+                throw new RpcException(new Status(StatusCode.NotFound, "User not found"));
+
+            if (user.TokenHash == null)
+                throw new RpcException(new Status(StatusCode.NotFound, "User does not authorize"));
+
+            if (!HashUtil.VerifyString(refreshToken, user.TokenHash))
+                throw new RpcException(new Status(StatusCode.InvalidArgument, "Token is not valid"));
+
+            string newAccessToken = JwtUtils.GetToken(user, AuthOptions.accessLifetime, JwtTypes.Access);
+            string newRefreshToken = JwtUtils.GetToken(user, AuthOptions.refreshLifetime, JwtTypes.Refresh);
+
+            user.TokenHash = HashUtil.HashString(refreshToken);
+            await ctx.db.SaveChangesAsync();
+
+            return new TokensResponse
+            {
+                Access = newAccessToken,
+                Refresh = newRefreshToken,
+            };
         }
 
         public async Task<TokensResponse> Register(string email, string username, string password)
@@ -57,15 +108,15 @@ namespace Server.Services.Auth
             if (user != null)
                 throw new RpcException(new Status(StatusCode.AlreadyExists, "User already exists"));
 
-            User newUser = new() { Email = email, Username = username, PasswordHash = HashString(password) };
+            User newUser = new() { Email = email, Username = username, PasswordHash = HashUtil.HashString(password) };
 
             await ctx.db.AddAsync(newUser);
             await ctx.db.SaveChangesAsync();
 
-            string accessToken = GetToken(newUser, AuthOptions.accessLifetime, "access");
-            string refreshToken = GetToken(newUser, AuthOptions.refreshLifetime, "refresh");
+            string accessToken = JwtUtils.GetToken(newUser, AuthOptions.accessLifetime, JwtTypes.Access);
+            string refreshToken = JwtUtils.GetToken(newUser, AuthOptions.refreshLifetime, JwtTypes.Refresh);
 
-            newUser.TokenHash = HashString(refreshToken);
+            newUser.TokenHash = HashUtil.HashString(refreshToken);
             await ctx.db.SaveChangesAsync();
 
             return new TokensResponse
@@ -75,47 +126,5 @@ namespace Server.Services.Auth
             };
         }
 
-        private ClaimsIdentity GetIdentity(User user, string scope)
-        {
-            var claims = new List<Claim>
-            {
-                new("email", user.Email),
-                new("uid", user.Id.ToString()),
-                new("scope", scope),
-                new("username", user.Username),
-            };
-
-            ClaimsIdentity claimsIdentity = new(claims, "Token");
-
-            return claimsIdentity;
-        }
-
-        private string GetToken(User user, TimeSpan lifetime, string scope)
-        {
-            var now = DateTime.Now;
-
-            ClaimsIdentity identity = GetIdentity(user, scope);
-
-            JwtSecurityToken token = new(
-                issuer: AuthOptions.ISSUER,
-                audience: AuthOptions.AUDIENCE,
-                notBefore: now,
-                claims: identity.Claims,
-                expires: now.Add(lifetime),
-                signingCredentials: new SigningCredentials(AuthOptions.GetSymmetricSecurityKey(), SecurityAlgorithms.HmacSha256)
-            );
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
-        }
-
-        private string HashString(string password)
-        {
-            return BCrypt.Net.BCrypt.HashPassword(password, BCrypt.Net.BCrypt.GenerateSalt());
-        }
-
-        private bool VerifyString(string password, string hashedPassword)
-        {
-            return BCrypt.Net.BCrypt.Verify(password, hashedPassword);
-        }
     }
 }

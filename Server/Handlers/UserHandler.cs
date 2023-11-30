@@ -6,13 +6,12 @@ namespace Server.Handlers
 {
     internal class UserHandler : UserHand.UserHandBase
     {
-        [Authorize("Access")]
+        [Authorize(AuthPolicy.AccessPolicy)]
         public override Task<UsersResponse> Users(EmptyRequest request, ServerCallContext context)
         {
             Context ctx = Context.GetInstance();
 
-            List<UserResponse> usersResponse = new List<UserResponse>();
-            ctx.db.Users.ToList().ForEach(user => usersResponse.Add(new UserResponse { Id = user.Id, Username = user.Username }));
+            List<UserResponse> usersResponse = [.. ctx.db.Users.Select(user => new UserResponse { Id = user.Id, Username = user.Username })];
 
             return Task.FromResult(new UsersResponse() { Users = { usersResponse } });
         }
