@@ -46,5 +46,6 @@ app.UseAuthorization();
 
 app.MapGrpcService<AuthHandler>();
 app.MapGrpcService<UserHandler>();
+app.MapGrpcService<BookHandler>();
 
 app.Run();

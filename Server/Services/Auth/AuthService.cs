@@ -3,8 +3,6 @@ using Storage.Models;
 using Grpc.Core;
 using Microsoft.EntityFrameworkCore;
 using System.IdentityModel.Tokens.Jwt;
-using Microsoft.IdentityModel.Tokens;
-using System.Security.Claims;
 using Server.Utils;
 
 namespace Server.Services.Auth
@@ -37,7 +35,7 @@ namespace Server.Services.Auth
             };
         }
 
-        public async Task Logout(int userId)
+        public async Task Logout(long userId)
         {
             var ctx = Context.GetInstance();
 

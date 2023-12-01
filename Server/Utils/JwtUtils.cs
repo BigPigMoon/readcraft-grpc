@@ -2,13 +2,8 @@
 using Microsoft.IdentityModel.Tokens;
 using Server.Services.Auth;
 using Storage.Models;
-using System;
-using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
 using System.Security.Claims;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Server.Utils
 {
@@ -26,14 +21,14 @@ namespace Server.Utils
             return jwtToken;
         }
 
-        public static int GetUid(JwtSecurityToken jwt)
+        public static long GetUid(JwtSecurityToken jwt)
         {
             var userID = jwt.Claims.FirstOrDefault(claims => claims.Type == JwtClaimTypes.UserId)?.Value;
 
             if (userID == null)
                 throw new RpcException(new Status(StatusCode.NotFound, "Uid not found"));
 
-            return int.Parse(userID);
+            return long.Parse(userID);
         }
 
 

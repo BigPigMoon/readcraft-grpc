@@ -12,6 +12,6 @@ namespace Server.Services.Auth
         Task<TokensResponse> Login(string email, string password);
         Task<TokensResponse> Register(string email, string username, string password);
         Task<TokensResponse> Refresh(string refreshToken);
-        Task Logout(int userId);
+        Task Logout(long userId);
     }
 }

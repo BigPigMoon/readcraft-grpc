@@ -66,7 +66,7 @@ public class AuthHandler : AuthHand.AuthHandBase
             throw new RpcException(new Status(StatusCode.Unauthenticated, "Token not found in header"));
 
         JwtSecurityToken jwt = JwtUtils.DecodeJwt(accessToken);
-        int userId = JwtUtils.GetUid(jwt);
+        long userId = JwtUtils.GetUid(jwt);
 
         await _authService.Logout(userId);
 
